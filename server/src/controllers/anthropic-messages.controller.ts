@@ -5,10 +5,11 @@ import { ApiProvider, decryptApiProviderKey } from "../models/api.model.js";
 import type { AuthenticatedHandler } from "../middleware/auth.middleware.js";
 import {
   anthropicEndpointFor,
-  isAnthropicProvider,
   isRetryableStatus,
   markProviderFailure,
   markProviderSuccess,
+  supportsAnthropicMessages,
+  usesBearerProviderAuth,
 } from "./chat-completions.controller.js";
 
 const requestTimeoutMs = 120_000;
@@ -77,7 +78,7 @@ export const createAnthropicMessage: AuthenticatedHandler = async (
       .select("+apiKey")
       .sort({ priority: 1, createdAt: 1 })
       .exec()
-  ).filter(isAnthropicProvider);
+  ).filter(supportsAnthropicMessages);
 
   if (providers.length === 0) {
     sendAnthropicError(
@@ -107,13 +108,18 @@ export const createAnthropicMessage: AuthenticatedHandler = async (
     let upstream: Response;
     try {
       const headers: Record<string, string> = {
-        "x-api-key": decryptApiProviderKey(provider),
         "anthropic-version": req.get("anthropic-version") ?? "2023-06-01",
         "content-type": "application/json",
         accept: messageRequest.stream
           ? "text/event-stream"
           : "application/json",
       };
+      const providerKey = decryptApiProviderKey(provider);
+      if (usesBearerProviderAuth(provider)) {
+        headers.authorization = `Bearer ${providerKey}`;
+      } else {
+        headers["x-api-key"] = providerKey;
+      }
       const beta = req.get("anthropic-beta");
       if (beta) headers["anthropic-beta"] = beta;
 

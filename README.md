@@ -39,8 +39,10 @@ The gateway supports both OpenAI Chat Completions (`POST /v1/chat/completions`)
 and Anthropic Messages (`POST /v1/messages`). Configure Anthropic-compatible
 upstreams as providers with a provider ID containing `anthropic` or `claude`
 (for example, `anthropic`) and an Anthropic API base URL such as
-`https://api.anthropic.com/v1`. OpenAI-compatible upstreams continue to use
-provider IDs such as `openai` or `openrouter`.
+`https://api.anthropic.com/v1`. OpenRouter providers (provider ID `openrouter`
+or base URL on `openrouter.ai`) also support the Anthropic Messages endpoint
+and can serve models such as `openai/gpt-oss-20b`. OpenAI-compatible upstreams
+continue to use provider IDs such as `openai` or `openrouter`.
 
 Both APIs use gateway API keys. OpenAI clients send the key as a Bearer token;
 Anthropic clients may send it as `x-api-key`. For example, an Anthropic SDK can

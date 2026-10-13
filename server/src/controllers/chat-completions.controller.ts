@@ -54,6 +54,28 @@ export function isAnthropicProvider(provider: {
   );
 }
 
+export function supportsAnthropicMessages(provider: {
+  provider: string;
+  baseUrl: string;
+}): boolean {
+  const hostname = new URL(provider.baseUrl).hostname;
+  return (
+    isAnthropicProvider(provider) ||
+    provider.provider.toLowerCase().includes("openrouter") ||
+    hostname === "openrouter.ai"
+  );
+}
+
+export function usesBearerProviderAuth(provider: {
+  provider: string;
+  baseUrl: string;
+}): boolean {
+  return (
+    provider.provider.toLowerCase().includes("openrouter") ||
+    new URL(provider.baseUrl).hostname === "openrouter.ai"
+  );
+}
+
 export function anthropicEndpointFor(baseUrl: string): string {
   const url = new URL(baseUrl);
   const normalizedPath = url.pathname.replace(/\/+$/, "");
