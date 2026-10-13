@@ -13,9 +13,22 @@ export const requireGatewayToken: RequestHandler<
   AuthenticatedLocals
 > = async (req, res, next) => {
   const authorization = req.get("authorization");
-  const match = authorization?.match(/^Bearer\s+(\S+)$/i);
+  const bearerToken = authorization?.match(/^Bearer\s+(\S+)$/i)?.[1];
+  const apiKeyToken = req.get("x-api-key");
+  const token = bearerToken ?? apiKeyToken;
 
-  if (!match?.[1]) {
+  if (!token) {
+    if (req.path === "/messages") {
+      res.status(401).json({
+        type: "error",
+        error: {
+          type: "authentication_error",
+          message: "A valid gateway API key is required",
+        },
+      });
+      return;
+    }
+
     res.status(401).json({
       error: {
         message: "A valid gateway API key is required",
@@ -27,10 +40,21 @@ export const requireGatewayToken: RequestHandler<
   }
 
   const gatewayToken = await GatewayToken.findOne({
-    tokenHash: hashGatewayToken(match[1]),
+    tokenHash: hashGatewayToken(token),
   }).exec();
 
   if (!gatewayToken) {
+    if (req.path === "/messages") {
+      res.status(401).json({
+        type: "error",
+        error: {
+          type: "authentication_error",
+          message: "A valid gateway API key is required",
+        },
+      });
+      return;
+    }
+
     res.status(401).json({
       error: {
         message: "A valid gateway API key is required",

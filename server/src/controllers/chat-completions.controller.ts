@@ -40,7 +40,32 @@ function endpointFor(baseUrl: string): string {
   return url.toString();
 }
 
-function isRetryableStatus(status: number): boolean {
+export function isAnthropicProvider(provider: {
+  provider: string;
+  baseUrl: string;
+}): boolean {
+  const providerId = provider.provider.toLowerCase();
+  const { hostname, pathname } = new URL(provider.baseUrl);
+  return (
+    providerId.includes("anthropic") ||
+    providerId.includes("claude") ||
+    hostname === "api.anthropic.com" ||
+    pathname.replace(/\/+$/, "").endsWith("/messages")
+  );
+}
+
+export function anthropicEndpointFor(baseUrl: string): string {
+  const url = new URL(baseUrl);
+  const normalizedPath = url.pathname.replace(/\/+$/, "");
+  url.pathname = normalizedPath.endsWith("/messages")
+    ? normalizedPath
+    : normalizedPath.endsWith("/v1")
+      ? `${normalizedPath}/messages`
+      : `${normalizedPath}/v1/messages`;
+  return url.toString();
+}
+
+export function isRetryableStatus(status: number): boolean {
   return (
     status === 401 ||
     status === 403 ||
@@ -52,7 +77,7 @@ function isRetryableStatus(status: number): boolean {
   );
 }
 
-async function markProviderFailure(
+export async function markProviderFailure(
   providerId: unknown,
   consecutiveFailures: number,
 ): Promise<void> {
@@ -75,7 +100,7 @@ async function markProviderFailure(
   ).exec();
 }
 
-async function markProviderSuccess(providerId: unknown): Promise<void> {
+export async function markProviderSuccess(providerId: unknown): Promise<void> {
   await ApiProvider.updateOne(
     { _id: providerId },
     {
@@ -102,17 +127,19 @@ export const createChatCompletion: AuthenticatedHandler = async (req, res) => {
   }
   const completionRequest = parsed.data;
 
-  const providers = await ApiProvider.find({
-    userId: res.locals.userId,
-    isEnabled: true,
-    $or: [
-      { supportedModels: { $size: 0 } },
-      { supportedModels: completionRequest.model },
-    ],
-  })
-    .select("+apiKey")
-    .sort({ priority: 1, createdAt: 1 })
-    .exec();
+  const providers = (
+    await ApiProvider.find({
+      userId: res.locals.userId,
+      isEnabled: true,
+      $or: [
+        { supportedModels: { $size: 0 } },
+        { supportedModels: completionRequest.model },
+      ],
+    })
+      .select("+apiKey")
+      .sort({ priority: 1, createdAt: 1 })
+      .exec()
+  ).filter((provider) => !isAnthropicProvider(provider));
 
   if (providers.length === 0) {
     sendError(

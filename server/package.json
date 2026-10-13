@@ -2,7 +2,7 @@
   "name": "llm-gateway",
   "version": "1.0.0",
   "private": true,
-  "description": "A secure, multi-provider OpenAI-compatible LLM gateway with automatic failover.",
+  "description": "A secure, multi-provider OpenAI- and Anthropic-compatible LLM gateway with automatic failover.",
   "type": "module",
   "engines": {
     "node": ">=22"

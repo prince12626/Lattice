@@ -4,7 +4,6 @@ import cors from "cors";
 import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import type { Auth } from "./config/better-auth.config.js";
-import { env } from "./config/env.config.js";
 import { providerControllerErrorHandler } from "./controllers/api.controller.js";
 import { logger } from "./lib/logger.lib.js";
 import { createApiRoutes } from "./routes/api.routes.js";
@@ -17,7 +16,11 @@ export function createApp(auth: Auth) {
     cors({
       origin: "https://lattice.princechaurasiya.in",
       credentials: true,
-      exposedHeaders: ["x-gateway-provider"],
+      exposedHeaders: [
+        "x-gateway-provider",
+        "anthropic-request-id",
+        "request-id",
+      ],
     }),
   );
   app.use(helmet());
@@ -44,7 +47,8 @@ export function createApp(auth: Auth) {
   app.get("/", (_req, res) => {
     res.status(200).json({
       name: "LLM Gateway",
-      description: "Multi-provider OpenAI-compatible API gateway",
+      description:
+        "Multi-provider OpenAI- and Anthropic-compatible API gateway",
       version: "1.0.0",
       documentation: "/health",
     });
