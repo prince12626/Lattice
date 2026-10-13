@@ -10,27 +10,12 @@ import { logger } from "./lib/logger.lib.js";
 import { createApiRoutes } from "./routes/api.routes.js";
 import { createGatewayRoutes } from "./routes/gateway.routes.js";
 
-const allowedFrontendOrigins = new Set([new URL(env.FRONTEND_ORIGIN).origin]);
-if (env.NODE_ENV !== "production") {
-  const localFrontend = new URL(env.FRONTEND_ORIGIN);
-  localFrontend.hostname =
-    localFrontend.hostname === "localhost" ? "127.0.0.1" : "localhost";
-  allowedFrontendOrigins.add(localFrontend.origin);
-}
-
 export function createApp(auth: Auth) {
   const app = express();
   app.disable("x-powered-by");
   app.use(
     cors({
-      origin(origin, callback) {
-        if (!origin || allowedFrontendOrigins.has(origin)) {
-          callback(null, true);
-          return;
-        }
-
-        callback(null, false);
-      },
+      origin: "https://lattice.princechaurasiya.in",
       credentials: true,
       exposedHeaders: ["x-gateway-provider"],
     }),
