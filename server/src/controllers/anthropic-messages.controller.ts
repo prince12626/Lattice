@@ -55,7 +55,24 @@ export const createAnthropicMessage: AuthenticatedHandler = async (
   res,
 ) => {
   const parsed = anthropicMessageRequestSchema.safeParse(req.body);
+  const body = req.body as Record<string, unknown>;
   if (!parsed.success) {
+    logger.warn(
+      {
+        issues: parsed.error.issues,
+        bodyKeys: Object.keys(body),
+        model: body.model,
+        max_tokens: body.max_tokens,
+        messagesType: Array.isArray(body.messages)
+          ? "array"
+          : typeof body.messages,
+        messagesLength: Array.isArray(body.messages)
+          ? body.messages.length
+          : undefined,
+      },
+      "Invalid Anthropic Messages request",
+    );
+
     sendAnthropicError(
       res,
       400,
