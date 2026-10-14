@@ -70,12 +70,11 @@ export const createAnthropicMessage: AuthenticatedHandler = async (
           ? body.messages.length
           : undefined,
         messageRoles: Array.isArray(body.messages)
-          ? body.messages.map((message) => {
-              if (message && typeof message === "object" && "role" in message) {
-                return (message as { role?: unknown }).role;
-              }
-              return undefined;
-            })
+          ? body.messages.map((message) =>
+              message && typeof message === "object"
+                ? (message as Record<string, unknown>).role
+                : undefined,
+            )
           : undefined,
       },
 
